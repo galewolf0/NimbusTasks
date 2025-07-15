@@ -479,30 +479,7 @@ class TaskManagerWidget(QWidget):
         input_layout.addWidget(self.add_btn)
         layout.addLayout(input_layout)
 
-        # Startup checkbox (Windows only)
-        if sys.platform.startswith('win'):
-            self.startup_checkbox = QCheckBox('Start NimbusTasks at Windows launch')
-            self.startup_checkbox.setStyleSheet('''
-                QCheckBox::indicator {
-                    width: 18px;
-                    height: 18px;
-                }
-                QCheckBox::indicator:checked {
-                    image: none;
-                    border: 1.5px solid #388e3c;
-                    background: #388e3c;
-                    color: #fff;
-                }
-                QCheckBox::indicator:unchecked {
-                    image: none;
-                    border: 1.5px solid #888;
-                    background: #23272e;
-                }
-            ''')
-            self.startup_checkbox.stateChanged.connect(self.on_startup_checkbox_changed)
-            layout.addWidget(self.startup_checkbox)
-            self._update_startup_checkbox()
-
+        # Remove Startup checkbox and related logic
         self.setLayout(layout)
         self.apply_dark_mode()
 
@@ -686,42 +663,6 @@ class TaskManagerWidget(QWidget):
         QApplication.quit() 
 
     def _update_startup_checkbox(self):
-        # Check if CalenDo is set to run at startup (Windows registry)
-        try:
-            import winreg
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                 r"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, winreg.KEY_READ)
-            value, _ = winreg.QueryValueEx(key, 'CalenDo')
-            winreg.CloseKey(key)
-            self.startup_checkbox.blockSignals(True)
-            self.startup_checkbox.setChecked(True)
-            self.startup_checkbox.blockSignals(False)
-        except Exception:
-            self.startup_checkbox.blockSignals(True)
-            self.startup_checkbox.setChecked(False)
-            self.startup_checkbox.blockSignals(False)
-
+        pass  # Removed launch on startup feature
     def on_startup_checkbox_changed(self, state):
-        # Add or remove CalenDo from Windows startup
-        try:
-            import winreg
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                 r"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, winreg.KEY_SET_VALUE)
-            exe_path = os.path.abspath(sys.argv[0])
-            python_path = sys.executable
-            # Use pythonw.exe to avoid console window if available
-            if python_path.lower().endswith('python.exe'):
-                pythonw = python_path[:-10] + 'pythonw.exe'
-                if os.path.exists(pythonw):
-                    python_path = pythonw
-            cmd = f'"{python_path}" "{exe_path}"'
-            if state == Qt.Checked:
-                winreg.SetValueEx(key, 'CalenDo', 0, winreg.REG_SZ, cmd)
-            else:
-                try:
-                    winreg.DeleteValue(key, 'CalenDo')
-                except FileNotFoundError:
-                    pass
-            winreg.CloseKey(key)
-        except Exception:
-            pass 
+        pass  # Removed launch on startup feature 
