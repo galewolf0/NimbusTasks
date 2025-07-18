@@ -518,8 +518,44 @@ class TaskManagerWidget(QWidget):
     def _add_task_widget(self, text, done, return_widget=False, is_recurring=False, task_id=None, is_completed=False):
         item = QListWidgetItem()
         def delete_task():
+            from PyQt5.QtWidgets import QMessageBox
             widget.delete_btn.setEnabled(False)
             widget.checkbox.setEnabled(False)
+            # Check if this task text exists on other dates (i.e., is recurring)
+            all_dates = get_all_task_dates()
+            occurrences = 0
+            for date_str in all_dates:
+                tasks = get_tasks_for_date(date_str)
+                for t in tasks:
+                    if t['text'] == text:
+                        occurrences += 1
+            if occurrences > 1:
+                # Show dialog: delete for this day or all days?
+                msg = QMessageBox(self)
+                msg.setIcon(QMessageBox.Question)
+                msg.setWindowTitle('Delete Recurring Task')
+                msg.setText('This task appears on multiple days.')
+                msg.setInformativeText('Delete only for this day, or for all days?')
+                only_this = msg.addButton('Only this day', QMessageBox.AcceptRole)
+                all_days = msg.addButton('All days', QMessageBox.DestructiveRole)
+                cancel = msg.addButton('Cancel', QMessageBox.RejectRole)
+                msg.setDefaultButton(only_this)
+                result = msg.exec_()
+                if msg.clickedButton() == cancel:
+                    widget.delete_btn.setEnabled(True)
+                    widget.checkbox.setEnabled(True)
+                    return
+                elif msg.clickedButton() == all_days:
+                    # Delete all tasks with this text across all dates
+                    for date_str in all_dates:
+                        tasks = get_tasks_for_date(date_str)
+                        for t in tasks:
+                            if t['text'] == text:
+                                db_delete_task(t['id'])
+                    self.load_tasks_for_date(self.current_date)
+                    self.update_calendar_task_highlights()
+                    return
+                # else: fall through to delete only this instance
             if is_completed:
                 delete_completed_task(task_id)
             else:
